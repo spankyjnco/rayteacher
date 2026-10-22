@@ -45,17 +45,23 @@ if st.button("Submit Entry"):
     new_df = pd.DataFrame(data)
     
     try:
-        # Establish connection entirely from the secure Secrets dashboard
+        # 1. Map your custom [gcp_service_account] block to the exact slot the library expects
+        st.secrets["connections"] = {"gsheets": st.secrets["gcp_service_account"]}
+        
+        # 2. Establish connection (it will now correctly find your service account credentials)
         conn = st.connection("gsheets", type=GSheetsConnection)
         
-        # Read the current sheet rows
-        existing_df = conn.read()
+        # 3. Pull the hidden spreadsheet URL dynamically out of your config block
+        sheet_url = st.secrets["gcp_service_account"]["spreadsheet"]
+        
+        # Read the current sheet rows using the secure link
+        existing_df = conn.read(spreadsheet=sheet_url)
         
         # Combine old data with the new submission
         updated_df = pd.concat([existing_df, new_df], ignore_index=True)
         
         # Save back to Google Sheet
-        conn.update(data=updated_df)
+        conn.update(spreadsheet=sheet_url, data=updated_df)
         
         st.success("Entry submitted successfully!")
         st.balloons()
