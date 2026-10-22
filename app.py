@@ -6,9 +6,6 @@ from streamlit_gsheets import GSheetsConnection
 # Set up the Streamlit app
 st.title("Teacher Portal")
 
-# URL of your Google Sheet
-SHEET_URL = "https://docs.google.com/spreadsheets/d/1xs-j1mCz6QEV2_-PFffxfI0TqnRhNzZskrE1pvhENOU/edit?usp=sharing"
-
 # Sidebar for teacher selection
 teachers = ["Teacher 1", "Teacher 2", "Teacher 3", "Teacher 4", "Teacher 5", "Teacher 6", "Teacher 7", "Teacher 8"]
 teacher = st.sidebar.selectbox("Select Teacher", teachers)
@@ -32,7 +29,7 @@ if st.button("Submit Entry"):
     # Get the current timestamp
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    # Prepare the data to append to the Google Sheet (using 'Yes'/'No' instead of True/False for clean sheet data)
+    # Prepare the data to append to the Google Sheet
     data = {
         "Timestamp": [timestamp],
         "Teacher Name": [teacher],
@@ -51,17 +48,17 @@ if st.button("Submit Entry"):
     new_df = pd.DataFrame(data)
     
     try:
-        # Establish connection correctly using the standard gsheets provider
+        # Establish connection using configuration from Secrets dashboard
         conn = st.connection("gsheets", type=GSheetsConnection)
         
-        # Read the current sheet data
-        existing_df = conn.read(spreadsheet=SHEET_URL)
+        # Read the sheet directly using the connection configuration
+        existing_df = conn.read()
         
         # Combine the old data with the new submission row
         updated_df = pd.concat([existing_df, new_df], ignore_index=True)
         
         # Write everything back to update your Google Sheet
-        conn.update(spreadsheet=SHEET_URL, data=updated_df)
+        conn.update(data=updated_df)
         
         # Show a success message
         st.success("Entry submitted successfully!")
@@ -69,4 +66,3 @@ if st.button("Submit Entry"):
         
     except Exception as e:
         st.error(f"Error saving to Google Sheets: {e}")
-        st.info("Make sure your Google Sheet sharing settings are set to 'Anyone with the link can edit'.")
