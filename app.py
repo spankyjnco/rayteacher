@@ -6,9 +6,6 @@ from streamlit_gsheets import GSheetsConnection
 # Set up the Streamlit app
 st.title("Teacher Portal")
 
-# Your exact spreadsheet ID extracted safely to avoid the link filter glitch
-REAL_SHEET_URL = "https://docs.google.com/spreadsheets/d/1xs-j1mCz6QEV2_-PFffxfI0TqnRhNzZskrE1pvhENOU/edit?hl=en-GB&gid=0#gid=0"
-
 # Sidebar for teacher selection
 teachers = ["Teacher 1", "Teacher 2", "Teacher 3", "Teacher 4", "Teacher 5", "Teacher 6", "Teacher 7", "Teacher 8"]
 teacher = st.sidebar.selectbox("Select Teacher", teachers)
@@ -48,16 +45,17 @@ if st.button("Submit Entry"):
     new_df = pd.DataFrame(data)
     
     try:
-        # Connect using the security credentials in secrets
+        # Establish connection entirely from the secure Secrets dashboard
         conn = st.connection("gsheets", type=GSheetsConnection)
         
-        # Explicitly pass the full URL directly here so it never looks at the broken secrets link
-        existing_df = conn.read(spreadsheet=REAL_SHEET_URL)
+        # Read the current sheet rows
+        existing_df = conn.read()
         
+        # Combine old data with the new submission
         updated_df = pd.concat([existing_df, new_df], ignore_index=True)
         
-        # Explicitly update using the hardcoded URL
-        conn.update(spreadsheet=REAL_SHEET_URL, data=updated_df)
+        # Save back to Google Sheet
+        conn.update(data=updated_df)
         
         st.success("Entry submitted successfully!")
         st.balloons()
