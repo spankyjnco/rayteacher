@@ -6,6 +6,9 @@ from streamlit_gsheets import GSheetsConnection
 # Set up the Streamlit app
 st.title("Teacher Portal")
 
+# Your exact spreadsheet ID extracted safely to avoid the link filter glitch
+REAL_SHEET_URL = "https://docs.google.com/spreadsheets/d/1xs-j1mCz6QEV2_-PFffxfI0TqnRhNzZskrE1pvhENOU/edit?hl=en-GB&gid=0#gid=0"
+
 # Sidebar for teacher selection
 teachers = ["Teacher 1", "Teacher 2", "Teacher 3", "Teacher 4", "Teacher 5", "Teacher 6", "Teacher 7", "Teacher 8"]
 teacher = st.sidebar.selectbox("Select Teacher", teachers)
@@ -26,10 +29,8 @@ daily_comments = st.text_area("Daily Comments / Handover Notes")
 
 # "Submit Entry" button
 if st.button("Submit Entry"):
-    # Get the current timestamp
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    # Prepare the data to append to the Google Sheet
     data = {
         "Timestamp": [timestamp],
         "Teacher Name": [teacher],
@@ -44,23 +45,20 @@ if st.button("Submit Entry"):
         "Defied Authority": ["Yes" if defied_authority else "No"]
     }
     
-    # Convert the data to a DataFrame
     new_df = pd.DataFrame(data)
     
     try:
-        # Establish connection using configuration from Secrets dashboard
+        # Connect using the security credentials in secrets
         conn = st.connection("gsheets", type=GSheetsConnection)
         
-        # Read the sheet directly using the connection configuration
-        existing_df = conn.read()
+        # Explicitly pass the full URL directly here so it never looks at the broken secrets link
+        existing_df = conn.read(spreadsheet=REAL_SHEET_URL)
         
-        # Combine the old data with the new submission row
         updated_df = pd.concat([existing_df, new_df], ignore_index=True)
         
-        # Write everything back to update your Google Sheet
-        conn.update(data=updated_df)
+        # Explicitly update using the hardcoded URL
+        conn.update(spreadsheet=REAL_SHEET_URL, data=updated_df)
         
-        # Show a success message
         st.success("Entry submitted successfully!")
         st.balloons()
         
