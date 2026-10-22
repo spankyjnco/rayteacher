@@ -48,22 +48,32 @@ if st.button("Submit Entry"):
         import gspread
         from google.oauth2.service_account import Credentials
 
-        # 1. Fetch your unchangeable credentials block from secrets
+        # 1. Fetch your custom configuration block securely from secrets
         gcp_config = dict(st.secrets["gcp_service_account"])
         sheet_url = gcp_config["spreadsheet"]
+
+        # 2. Programmatically reconstruct the clean PEM layout expected by the crypto engine
+        raw_key = gcp_config["private_key"]
+        
+        # Strip out the headers if they are smashed together on one line
+        clean_body = raw_key.replace("-----BEGIN PRIVATE KEY-----", "").replace("-----END PRIVATE KEY-----", "").strip()
+        
+        # Re-build the private key with actual physical line breaks that Python requires
+        formatted_private_key = f"-----BEGIN PRIVATE KEY-----\n{clean_body}\n-----END PRIVATE KEY-----\n"
+        gcp_config["private_key"] = formatted_private_key
 
         # Define OAuth scopes for Google Sheets read/write access
         scopes = ["https://googleapis.com"]
 
-        # 2. Authenticate directly using your custom dictionary payload
+        # 3. Authenticate with Google using the freshly repaired in-memory config
         creds = Credentials.from_service_account_info(gcp_config, scopes=scopes)
         gc = gspread.authorize(creds)
 
-        # 3. Open your specific spreadsheet and target the first worksheet tab
+        # 4. Open the spreadsheet and target the first worksheet tab
         sh = gc.open_by_url(sheet_url)
         worksheet = sh.get_worksheet(0) 
 
-        # 4. Directly append the single form submission row to the bottom of the sheet
+        # 5. Append your submitted data safely to the bottom row
         row_to_append = new_df.values.tolist()[0]
         worksheet.append_row(row_to_append)
         
