@@ -9,15 +9,15 @@ st.title("Teacher Portal")
 teachers = ["Teacher 1", "Teacher 2", "Teacher 3", "Teacher 4", "Teacher 5", "Teacher 6", "Teacher 7", "Teacher 8"]
 teacher = st.sidebar.selectbox("Select Teacher", teachers)
 
+# Sidebar with checklist of behaviors
+st.sidebar.header("Behaviors Checklist")
+late_to_class = st.sidebar.checkbox("Late to class")
+left_class = st.sidebar.checkbox("Left class")
+curse_words = st.sidebar.checkbox("Curse Words")
+defied_authority = st.sidebar.checkbox("Defied Authority")
+
 # Main area with text area for "Daily Comments / Handover Notes"
 daily_comments = st.text_area("Daily Comments / Handover Notes")
-
-# Sidebar or secondary column with a checklist of behaviors
-st.sidebar.header("Behaviors Checklist")
-focused = st.sidebar.checkbox("Focused")
-disrupted = st.sidebar.checkbox("Disrupted")
-completed_tasks = st.sidebar.checkbox("Completed Tasks")
-followed_directions = st.sidebar.checkbox("Followed Directions")
 
 # "Submit Entry" button
 if st.button("Submit Entry"):
@@ -29,17 +29,17 @@ if st.button("Submit Entry"):
         "Timestamp": [timestamp],
         "Teacher Name": [teacher],
         "Daily Comments": [daily_comments],
-        "Focused": [focused],
-        "Disrupted": [disrupted],
-        "Completed Tasks": [completed_tasks],
-        "Followed Directions": [followed_directions]
+        "Late to class": [late_to_class],
+        "Left class": [left_class],
+        "Curse Words": [curse_words],
+        "Defied Authority": [defied_authority]
     }
     
     # Convert the data to a DataFrame
     df = pd.DataFrame(data)
     
     # Connect to the Google Sheet
-    conn = st.experimental_connection("gsheets", type="sheet")
+    conn = st.connection("gsheets", type="sheet")
     
     # Append the new row to the Google Sheet
     conn.append(df, sheet_url="https://docs.google.com/spreadsheets/d/1xs-j1mCz6QEV2_-PFffxfI0TqnRhNzZskrE1pvhENOU/edit?usp=sharing", index=False)
