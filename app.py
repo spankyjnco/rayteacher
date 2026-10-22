@@ -42,7 +42,7 @@ if st.button("Submit Entry"):
     conn = st.experimental_connection("gsheets", type="sheet")
     
     # Append the new row to the Google Sheet
-    conn.append(df, sheet_url="YOUR_GOOGLE_SHEET_URL", index=False)
+    conn.append(df, sheet_url="https://docs.google.com/spreadsheets/d/1xs-j1mCz6QEV2_-PFffxfI0TqnRhNzZskrE1pvhENOU/edit?usp=sharing", index=False)
     
     # Show a success message
     st.success("Entry submitted successfully!")
