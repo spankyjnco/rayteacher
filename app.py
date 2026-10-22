@@ -11,6 +11,10 @@ teacher = st.sidebar.selectbox("Select Teacher", teachers)
 
 # Sidebar with checklist of behaviors
 st.sidebar.header("Behaviors Checklist")
+good_day = st.sidebar.checkbox("Good Day")
+completed_tasks = st.sidebar.checkbox("Completed Tasks")
+followed_directions = st.sidebar.checkbox("Followed Directions")
+disrupted_others = st.sidebar.checkbox("Disrupted Others")
 late_to_class = st.sidebar.checkbox("Late to class")
 left_class = st.sidebar.checkbox("Left class")
 curse_words = st.sidebar.checkbox("Curse Words")
@@ -29,6 +33,10 @@ if st.button("Submit Entry"):
         "Timestamp": [timestamp],
         "Teacher Name": [teacher],
         "Daily Comments": [daily_comments],
+        "Good Day": [good_day],
+        "Completed Tasks": [completed_tasks],
+        "Followed Directions": [followed_directions],
+        "Disrupted Others": [disrupted_others],
         "Late to class": [late_to_class],
         "Left class": [left_class],
         "Curse Words": [curse_words],
