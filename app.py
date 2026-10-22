@@ -45,23 +45,27 @@ if st.button("Submit Entry"):
     new_df = pd.DataFrame(data)
     
     try:
-        # 1. Map your custom [gcp_service_account] block to the exact slot the library expects
-        st.secrets["connections"] = {"gsheets": st.secrets["gcp_service_account"]}
-        
-        # 2. Establish connection (it will now correctly find your service account credentials)
-        conn = st.connection("gsheets", type=GSheetsConnection)
-        
-        # 3. Pull the hidden spreadsheet URL dynamically out of your config block
-        sheet_url = st.secrets["gcp_service_account"]["spreadsheet"]
-        
-        # Read the current sheet rows using the secure link
-        existing_df = conn.read(spreadsheet=sheet_url)
-        
-        # Combine old data with the new submission
-        updated_df = pd.concat([existing_df, new_df], ignore_index=True)
-        
-        # Save back to Google Sheet
-        conn.update(spreadsheet=sheet_url, data=updated_df)
+        import gspread
+        from google.oauth2.service_account import Credentials
+
+        # 1. Fetch your unchangeable credentials block from secrets
+        gcp_config = dict(st.secrets["gcp_service_account"])
+        sheet_url = gcp_config["spreadsheet"]
+
+        # Define OAuth scopes for Google Sheets read/write access
+        scopes = ["https://googleapis.com"]
+
+        # 2. Authenticate directly using your custom dictionary payload
+        creds = Credentials.from_service_account_info(gcp_config, scopes=scopes)
+        gc = gspread.authorize(creds)
+
+        # 3. Open your specific spreadsheet and target the first worksheet tab
+        sh = gc.open_by_url(sheet_url)
+        worksheet = sh.get_worksheet(0) 
+
+        # 4. Directly append the single form submission row to the bottom of the sheet
+        row_to_append = new_df.values.tolist()[0]
+        worksheet.append_row(row_to_append)
         
         st.success("Entry submitted successfully!")
         st.balloons()
