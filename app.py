@@ -1,16 +1,16 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from streamlit_gsheets import GSheetsConnection
+import gspread
+from google.oauth2.service_account import Credentials
 
-# Set up the Streamlit app
 st.title("Teacher Portal")
 
-# Sidebar for teacher selection
-teachers = ["Teacher 1", "Teacher 2", "Teacher 3", "Teacher 4", "Teacher 5", "Teacher 6", "Teacher 7", "Teacher 8"]
+# Sidebar
+teachers = ["Teacher 1", "Teacher 2", "Teacher 3", "Teacher 4",
+            "Teacher 5", "Teacher 6", "Teacher 7", "Teacher 8"]
 teacher = st.sidebar.selectbox("Select Teacher", teachers)
 
-# Sidebar with checklist of behaviors
 st.sidebar.header("Behaviors Checklist")
 good_day = st.sidebar.checkbox("Good Day")
 completed_tasks = st.sidebar.checkbox("Completed Tasks")
@@ -21,64 +21,48 @@ left_class = st.sidebar.checkbox("Left class")
 curse_words = st.sidebar.checkbox("Curse Words")
 defied_authority = st.sidebar.checkbox("Defied Authority")
 
-# Main area with text area for "Daily Comments / Handover Notes"
 daily_comments = st.text_area("Daily Comments / Handover Notes")
 
-# "Submit Entry" button
 if st.button("Submit Entry"):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    data = {
-        "Timestamp": [timestamp],
-        "Teacher Name": [teacher],
-        "Daily Comments": [daily_comments],
-        "Good Day": ["Yes" if good_day else "No"],
-        "Completed Tasks": ["Yes" if completed_tasks else "No"],
-        "Followed Directions": ["Yes" if followed_directions else "No"],
-        "Disrupted Others": ["Yes" if disrupted_others else "No"],
-        "Late to class": ["Yes" if late_to_class else "No"],
-        "Left class": ["Yes" if left_class else "No"],
-        "Curse Words": ["Yes" if curse_words else "No"],
-        "Defied Authority": ["Yes" if defied_authority else "No"]
-    }
-    
-    new_df = pd.DataFrame(data)
-    
+
+    row = [
+        timestamp,
+        teacher,
+        daily_comments,
+        "Yes" if good_day else "No",
+        "Yes" if completed_tasks else "No",
+        "Yes" if followed_directions else "No",
+        "Yes" if disrupted_others else "No",
+        "Yes" if late_to_class else "No",
+        "Yes" if left_class else "No",
+        "Yes" if curse_words else "No",
+        "Yes" if defied_authority else "No",
+    ]
+
     try:
-        import gspread
-        from google.oauth2.service_account import Credentials
+        # Correct scopes
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive"
+        ]
 
-        # 1. Fetch your custom configuration block securely from secrets
-        gcp_config = dict(st.secrets["gcp_service_account"])
-        sheet_url = gcp_config["spreadsheet"]
+        # Load secrets (Streamlit already formats the private key correctly)
+        creds = Credentials.from_service_account_info(
+            st.secrets["gcp_service_account"],
+            scopes=scopes
+        )
 
-        # 2. Programmatically reconstruct the clean PEM layout expected by the crypto engine
-        raw_key = gcp_config["private_key"]
-        
-        # Strip out the headers if they are smashed together on one line
-        clean_body = raw_key.replace("-----BEGIN PRIVATE KEY-----", "").replace("-----END PRIVATE KEY-----", "").strip()
-        
-        # Re-build the private key with actual physical line breaks that Python requires
-        formatted_private_key = f"-----BEGIN PRIVATE KEY-----\n{clean_body}\n-----END PRIVATE KEY-----\n"
-        gcp_config["private_key"] = formatted_private_key
-
-        # Define OAuth scopes for Google Sheets read/write access
-        scopes = ["https://googleapis.com"]
-
-        # 3. Authenticate with Google using the freshly repaired in-memory config
-        creds = Credentials.from_service_account_info(gcp_config, scopes=scopes)
         gc = gspread.authorize(creds)
 
-        # 4. Open the spreadsheet and target the first worksheet tab
-        sh = gc.open_by_url(sheet_url)
-        worksheet = sh.get_worksheet(0) 
+        # Open by URL that is stored in secrets
+        sh = gc.open_by_url(st.secrets["gcp_service_account"]["spreadsheet"])
+        worksheet = sh.get_worksheet(0)   # first tab
 
-        # 5. Append your submitted data safely to the bottom row
-        row_to_append = new_df.values.tolist()[0]
-        worksheet.append_row(row_to_append)
-        
+        worksheet.append_row(row)
+
         st.success("Entry submitted successfully!")
         st.balloons()
-        
+
     except Exception as e:
         st.error(f"Error saving to Google Sheets: {e}")
