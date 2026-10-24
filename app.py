@@ -42,29 +42,31 @@ if st.button("Submit Entry"):
         "Yes" if defied_authority else "No",
     ]
 
-    try:
-        # Correct scopes
-        scopes = [
-            "https://www.googleapis.com/auth/spreadsheets",
-            "https://www.googleapis.com/auth/drive"
-        ]
+try:
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
 
-        # Load secrets (Streamlit already formats the private key correctly)
-        creds = Credentials.from_service_account_info(
-            st.secrets["gcp_service_account"],
-            scopes=scopes
-        )
+    # Make a mutable copy of the secrets
+    creds_info = dict(st.secrets["gcp_service_account"])
 
-        gc = gspread.authorize(creds)
+    # Force real newlines (this is the critical line)
+    creds_info["private_key"] = creds_info["private_key"].replace("\\n", "\n")
 
-        # Open by URL that is stored in secrets
-        sh = gc.open_by_url(st.secrets["gcp_service_account"]["spreadsheet"])
-        worksheet = sh.get_worksheet(0)   # first tab
+    creds = Credentials.from_service_account_info(
+        creds_info,
+        scopes=scopes
+    )
 
-        worksheet.append_row(row)
+    gc = gspread.authorize(creds)
+    sh = gc.open_by_url(creds_info["spreadsheet"])
+    worksheet = sh.get_worksheet(0)
 
-        st.success("Entry submitted successfully!")
-        st.balloons()
+    worksheet.append_row(row)
 
-    except Exception as e:
-        st.error(f"Error saving to Google Sheets: {e}")
+    st.success("Entry submitted successfully!")
+    st.balloons()
+
+except Exception as e:
+    st.error(f"Error saving to Google Sheets: {e}")
