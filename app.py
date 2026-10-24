@@ -4,6 +4,8 @@ from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
 
+st.write("Service account:", st.secrets["gcp_service_account"]["client_email"])
+
 st.title("Teacher Portal")
 
 # Sidebar
