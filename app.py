@@ -23,7 +23,7 @@ defied_authority = st.sidebar.checkbox("Defied Authority")
 daily_comments = st.text_area("Daily Comments / Handover Notes")
 
 if st.button("Submit Entry"):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = datetime.now().strftime("%b %d--%H:%M")
 
     row = [
         timestamp,
