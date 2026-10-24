@@ -3,11 +3,9 @@ import pandas as pd
 from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
-import json
 
 st.title("Teacher Portal")
 
-# Sidebar
 teachers = ["Teacher 1", "Teacher 2", "Teacher 3", "Teacher 4",
             "Teacher 5", "Teacher 6", "Teacher 7", "Teacher 8"]
 teacher = st.sidebar.selectbox("Select Teacher", teachers)
@@ -47,8 +45,9 @@ if st.button("Submit Entry"):
             "https://www.googleapis.com/auth/drive"
         ]
 
-        # Load the whole JSON from secrets
-        creds_info = json.loads(st.secrets["gcp_service_account"]["json"])
+        # Copy secrets and force proper newlines
+        creds_info = dict(st.secrets["gcp_service_account"])
+        creds_info["private_key"] = creds_info["private_key"].replace("\\n", "\n")
 
         creds = Credentials.from_service_account_info(
             creds_info,
