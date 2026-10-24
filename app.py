@@ -55,7 +55,7 @@ if st.button("Submit Entry"):
         )
 
         gc = gspread.authorize(creds)
-        sh = gc.open_by_url(st.secrets["spreadsheet"])
+        sh = gc.open_by_url(st.secrets["gcp_service_account"]["spreadsheet"])
         worksheet = sh.get_worksheet(0)
 
         worksheet.append_row(row)
