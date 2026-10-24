@@ -3,8 +3,7 @@ import pandas as pd
 from datetime import datetime
 import gspread
 from google.oauth2.service_account import Credentials
-
-st.write("Service account:", st.secrets["gcp_service_account"]["client_email"])
+import json
 
 st.title("Teacher Portal")
 
@@ -42,31 +41,28 @@ if st.button("Submit Entry"):
         "Yes" if defied_authority else "No",
     ]
 
-try:
-    scopes = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
-    ]
+    try:
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive"
+        ]
 
-    # Make a mutable copy of the secrets
-    creds_info = dict(st.secrets["gcp_service_account"])
+        # Load the whole JSON from secrets
+        creds_info = json.loads(st.secrets["gcp_service_account"]["json"])
 
-    # Force real newlines (this is the critical line)
-    creds_info["private_key"] = creds_info["private_key"].replace("\\n", "\n")
+        creds = Credentials.from_service_account_info(
+            creds_info,
+            scopes=scopes
+        )
 
-    creds = Credentials.from_service_account_info(
-        creds_info,
-        scopes=scopes
-    )
+        gc = gspread.authorize(creds)
+        sh = gc.open_by_url(st.secrets["spreadsheet"])
+        worksheet = sh.get_worksheet(0)
 
-    gc = gspread.authorize(creds)
-    sh = gc.open_by_url(creds_info["spreadsheet"])
-    worksheet = sh.get_worksheet(0)
+        worksheet.append_row(row)
 
-    worksheet.append_row(row)
+        st.success("Entry submitted successfully!")
+        st.balloons()
 
-    st.success("Entry submitted successfully!")
-    st.balloons()
-
-except Exception as e:
-    st.error(f"Error saving to Google Sheets: {e}")
+    except Exception as e:
+        st.error(f"Error saving to Google Sheets: {e}")
